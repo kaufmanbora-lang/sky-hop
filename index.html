@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=600, height=600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Sky Hop — бесконечная игра для Meta Ray-Ban Display с управлением через Meta Neural Band.">
+  <meta name="mrbd-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>Sky Hop</title>
+</head>
+<body>
+  <main id="app" class="app-root" aria-live="polite">
+    <div class="sky-layer" aria-hidden="true"></div>
+
+    <section id="auth-screen" class="screen auth-screen active" aria-labelledby="auth-title">
+      <div class="brand brand-auth">
+        <img src="assets/bird.webp" alt="" class="brand-bird">
+        <h1 id="auth-title"><span>SKY</span><span>HOP</span></h1>
+      </div>
+
+      <div class="auth-tabs" role="tablist" aria-label="Вход или регистрация">
+        <button class="focusable tab active" data-action="auth-tab" data-mode="login" role="tab">ВОЙТИ</button>
+        <button class="focusable tab" data-action="auth-tab" data-mode="register" role="tab">СОЗДАТЬ</button>
+      </div>
+
+      <form id="auth-form" class="glass-panel auth-panel" novalidate>
+        <label for="email">EMAIL</label>
+        <input id="email" class="focusable" type="email" inputmode="email" autocomplete="email" placeholder="pilot@example.com" aria-label="Электронная почта">
+        <label for="password">ПАРОЛЬ</label>
+        <input id="password" class="focusable secret-input" type="text" autocomplete="current-password" placeholder="Минимум 6 символов" aria-label="Пароль">
+        <p id="auth-error" class="form-error" role="alert"></p>
+        <button id="auth-submit" class="focusable primary-button" type="submit">ВОЙТИ</button>
+        <p class="device-note">Один аккаунт • одни очки</p>
+      </form>
+    </section>
+
+    <section id="menu-screen" class="screen menu-screen" aria-labelledby="menu-title">
+      <div id="winner-title" class="winner-title hidden"><span aria-hidden="true">🏆</span> ПОБЕДИТЕЛЬ</div>
+      <header class="menu-header">
+        <div class="brand brand-menu">
+          <h1 id="menu-title"><span>SKY</span><span>HOP</span></h1>
+          <img src="assets/bird.webp" alt="Жёлтая птица Sky Hop" class="menu-bird">
+        </div>
+        <div class="account-strip">
+          <span id="menu-email" class="account-email"></span>
+          <div class="difficulty-switch" role="group" aria-label="Режим сложности">
+            <button class="focusable difficulty-button" data-action="select-difficulty" data-difficulty="easy" aria-pressed="false">ЛЕГКО</button>
+            <button class="focusable difficulty-button active" data-action="select-difficulty" data-difficulty="medium" aria-pressed="true">СРЕДНЕ</button>
+            <button class="focusable difficulty-button" data-action="select-difficulty" data-difficulty="hard" aria-pressed="false">ХАРД</button>
+          </div>
+          <span class="wallet"><span aria-hidden="true">★</span> <b id="wallet-value">0</b></span>
+        </div>
+      </header>
+
+      <nav class="menu-actions" aria-label="Главное меню">
+        <button class="focusable primary-button hero-button" data-action="start-game">НАЧАТЬ</button>
+        <div class="menu-grid">
+          <button class="focusable secondary-button" data-action="show-results">РЕЗУЛЬТАТЫ</button>
+          <button class="focusable secondary-button" data-action="show-shop">МАГАЗИН</button>
+          <button class="focusable secondary-button" data-action="show-ranks">РАНГИ</button>
+          <button class="focusable secondary-button" data-action="toggle-sound"><span id="sound-label">ЗВУК: ВКЛ</span></button>
+        </div>
+      </nav>
+
+      <footer class="rank-summary">
+        <div>
+          <span class="rank-label">ТЕКУЩИЙ РАНГ</span>
+          <strong id="menu-rank">НОВИЧОК</strong>
+        </div>
+        <div class="rank-progress"><span id="rank-progress-fill"></span></div>
+        <span id="rank-progress-text">0 / 250 труб</span>
+      </footer>
+    </section>
+
+    <section id="game-screen" class="screen game-screen" aria-label="Игровое поле">
+      <canvas id="game-canvas" class="game-input" tabindex="0" width="600" height="600" aria-label="Sky Hop. Pinch или касание одним пальцем — вверх; Back или касание двумя пальцами — вниз; двойное касание двумя пальцами — выход"></canvas>
+      <div class="game-hud" aria-hidden="true">
+        <div id="lives-block" class="lives-block">
+          <span id="difficulty-hud-label" class="lives-label">СРЕДНИЙ • ЖИЗНИ</span>
+          <div id="lives-value" class="lives-value"><i class="life-heart">♥</i><i class="life-heart">♥</i></div>
+        </div>
+        <div id="modifier-badge" class="modifier-badge hidden"></div>
+        <div class="score-block">
+          <strong id="score-value">000</strong>
+          <span>★ <b id="run-wallet">0</b> <em>• <b id="goal-progress">0/1000</b></em></span>
+        </div>
+        <div class="sector-block">
+          <span id="sector-label">СЕКТОР 1</span>
+          <div class="sector-track"><i id="sector-fill"></i></div>
+          <b id="sector-progress">0/100</b>
+        </div>
+      </div>
+      <div id="start-overlay" class="game-overlay">
+        <h2>ГОТОВ?</h2>
+        <p><b>PINCH / 1 ПАЛЕЦ</b> — взмах вверх</p>
+        <p><b>BACK / 2 ПАЛЬЦА</b> — рывок вниз</p>
+        <p class="sensor-exit-help"><b>2× ДВА ПАЛЬЦА</b> — выход в меню</p>
+        <p id="lives-help" class="lives-help"><b>2 ЖИЗНИ</b> • сердце каждые 100 труб</p>
+        <button class="focusable primary-button" data-action="launch-run">ЛЕТИМ!</button>
+      </div>
+      <div id="game-over-overlay" class="game-overlay game-over hidden">
+        <p class="over-label">ПОЛЁТ ЗАВЕРШЁН</p>
+        <h2 id="final-score">0</h2>
+        <div class="over-stats">
+          <span>Рекорд <b id="final-best">0</b></span>
+          <span>Монеты <b id="final-earned">+0</b></span>
+        </div>
+        <p id="rank-unlock" class="rank-unlock hidden"></p>
+        <button class="focusable primary-button" data-action="restart-game">ЕЩЁ РАЗ</button>
+        <button class="focusable secondary-button compact" data-action="return-menu">В МЕНЮ</button>
+      </div>
+      <div id="victory-overlay" class="victory-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+        <video id="victory-video" class="victory-video" muted playsinline preload="metadata" aria-label="Победная анимация Sky Hop">
+          <source src="assets/victory-finale-600.mp4" type="video/mp4">
+        </video>
+        <div class="victory-sunburst" aria-hidden="true"></div>
+        <div class="victory-firework firework-one" aria-hidden="true"></div>
+        <div class="victory-firework firework-two" aria-hidden="true"></div>
+        <div class="victory-firework firework-three" aria-hidden="true"></div>
+        <div class="victory-confetti" aria-hidden="true">
+          <i style="--confetti-x:32px;--confetti-delay:.05s;--confetti-color:#ff3b56;--confetti-rotate:520deg"></i>
+          <i style="--confetti-x:75px;--confetti-delay:.32s;--confetti-color:#ffe329;--confetti-rotate:-440deg"></i>
+          <i style="--confetti-x:112px;--confetti-delay:.12s;--confetti-color:#39e56d;--confetti-rotate:610deg"></i>
+          <i style="--confetti-x:151px;--confetti-delay:.46s;--confetti-color:#24cfff;--confetti-rotate:-580deg"></i>
+          <i style="--confetti-x:197px;--confetti-delay:.23s;--confetti-color:#ff7847;--confetti-rotate:470deg"></i>
+          <i style="--confetti-x:238px;--confetti-delay:.6s;--confetti-color:#9c6cff;--confetti-rotate:-650deg"></i>
+          <i style="--confetti-x:276px;--confetti-delay:.08s;--confetti-color:#ffe329;--confetti-rotate:540deg"></i>
+          <i style="--confetti-x:319px;--confetti-delay:.4s;--confetti-color:#ff3b56;--confetti-rotate:-490deg"></i>
+          <i style="--confetti-x:361px;--confetti-delay:.18s;--confetti-color:#4ee8ff;--confetti-rotate:690deg"></i>
+          <i style="--confetti-x:405px;--confetti-delay:.52s;--confetti-color:#49e76c;--confetti-rotate:-530deg"></i>
+          <i style="--confetti-x:448px;--confetti-delay:.27s;--confetti-color:#ff8739;--confetti-rotate:590deg"></i>
+          <i style="--confetti-x:493px;--confetti-delay:.67s;--confetti-color:#ffe329;--confetti-rotate:-620deg"></i>
+          <i style="--confetti-x:536px;--confetti-delay:.15s;--confetti-color:#ff4a74;--confetti-rotate:480deg"></i>
+          <i style="--confetti-x:570px;--confetti-delay:.37s;--confetti-color:#32d9ff;--confetti-rotate:-570deg"></i>
+          <i style="--confetti-x:54px;--confetti-delay:1.08s;--confetti-color:#45e06e;--confetti-rotate:650deg"></i>
+          <i style="--confetti-x:133px;--confetti-delay:1.32s;--confetti-color:#ffbd21;--confetti-rotate:-530deg"></i>
+          <i style="--confetti-x:216px;--confetti-delay:.97s;--confetti-color:#ff4770;--confetti-rotate:590deg"></i>
+          <i style="--confetti-x:344px;--confetti-delay:1.22s;--confetti-color:#38d8ff;--confetti-rotate:-660deg"></i>
+          <i style="--confetti-x:427px;--confetti-delay:1.02s;--confetti-color:#a77aff;--confetti-rotate:510deg"></i>
+          <i style="--confetti-x:521px;--confetti-delay:1.41s;--confetti-color:#ffe22d;--confetti-rotate:-600deg"></i>
+        </div>
+        <img src="assets/bird.webp" class="victory-bird" alt="Победившая птица Sky Hop">
+        <div class="victory-cup" aria-hidden="true">🏆</div>
+        <div class="victory-copy">
+          <p>ФИНИШ ДОСТИГНУТ</p>
+          <h2 id="victory-title">ПОБЕДА!</h2>
+          <strong>1000 <span>/ 1000 ТРУБ</span></strong>
+          <small>ЗВАНИЕ ОТКРЫТО: ПОБЕДИТЕЛЬ</small>
+        </div>
+        <div class="victory-actions">
+          <button class="focusable primary-button" data-action="restart-game">ЕЩЁ ПОЛЁТ</button>
+          <button class="focusable secondary-button compact" data-action="return-menu">В МЕНЮ</button>
+        </div>
+      </div>
+      <div id="rank-celebration" class="rank-celebration hidden" role="status" aria-live="polite">
+        <div class="rank-rays" aria-hidden="true"></div>
+        <div class="rank-orbit rank-orbit-one" aria-hidden="true"></div>
+        <div class="rank-orbit rank-orbit-two" aria-hidden="true"></div>
+        <div class="rank-sparks" aria-hidden="true">
+          <i style="--spark-x:-185px;--spark-y:-92px;--spark-delay:.05s"></i>
+          <i style="--spark-x:-142px;--spark-y:-178px;--spark-delay:.18s"></i>
+          <i style="--spark-x:-65px;--spark-y:-205px;--spark-delay:.08s"></i>
+          <i style="--spark-x:38px;--spark-y:-210px;--spark-delay:.25s"></i>
+          <i style="--spark-x:136px;--spark-y:-170px;--spark-delay:.12s"></i>
+          <i style="--spark-x:190px;--spark-y:-75px;--spark-delay:.3s"></i>
+          <i style="--spark-x:181px;--spark-y:72px;--spark-delay:.1s"></i>
+          <i style="--spark-x:122px;--spark-y:164px;--spark-delay:.22s"></i>
+          <i style="--spark-x:25px;--spark-y:205px;--spark-delay:.04s"></i>
+          <i style="--spark-x:-82px;--spark-y:190px;--spark-delay:.27s"></i>
+          <i style="--spark-x:-165px;--spark-y:118px;--spark-delay:.14s"></i>
+          <i style="--spark-x:-198px;--spark-y:18px;--spark-delay:.32s"></i>
+        </div>
+        <div class="rank-celebration-card">
+          <p class="rank-new-label">НОВЫЙ РАНГ</p>
+          <div class="rank-medal-shell">
+            <span id="rank-celebration-medal" class="rank-celebration-medal">★</span>
+          </div>
+          <h2 id="rank-celebration-name">ЛЁТЧИК</h2>
+          <p class="rank-opened-label">ОТКРЫТ!</p>
+        </div>
+      </div>
+      <div class="control-hints" aria-hidden="true">
+        <span id="up-control-hint"><b>PINCH / 1 ПАЛЕЦ</b> • ВВЕРХ ↑</span>
+        <span id="down-control-hint"><b>BACK / 2 ПАЛЬЦА</b> • ВНИЗ ↓</span>
+      </div>
+    </section>
+
+    <section id="results-screen" class="screen sub-screen" aria-labelledby="results-title">
+      <header class="sub-header">
+        <span class="trophy" aria-hidden="true">🏆</span>
+        <h1 id="results-title">РЕЗУЛЬТАТЫ</h1>
+        <p>Лучшие полёты</p>
+      </header>
+      <ol id="results-list" class="results-list scroll-container"></ol>
+      <div class="results-total">ВСЕГО ПРОЙДЕНО <b id="lifetime-total">0</b> ТРУБ</div>
+      <p class="back-hint">BACK • НАЗАД</p>
+    </section>
+
+    <section id="shop-screen" class="screen sub-screen" aria-labelledby="shop-title">
+      <header class="sub-header shop-header">
+        <h1 id="shop-title">МАГАЗИН</h1>
+        <p>Выбери шлейф</p>
+        <span class="wallet shop-wallet">★ <b id="shop-wallet">0</b></span>
+      </header>
+      <div id="shop-list" class="shop-list scroll-container"></div>
+      <p class="back-hint">BACK • НАЗАД</p>
+    </section>
+
+    <section id="ranks-screen" class="screen sub-screen" aria-labelledby="ranks-title">
+      <header class="sub-header rank-header">
+        <h1 id="ranks-title">РАНГИ</h1>
+        <p>Считаются все пройденные трубы</p>
+      </header>
+      <div id="ranks-list" class="ranks-list scroll-container"></div>
+      <p class="back-hint">BACK • НАЗАД</p>
+    </section>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

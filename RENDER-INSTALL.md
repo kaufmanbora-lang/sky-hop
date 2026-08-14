@@ -71,7 +71,7 @@ https://sky-hop-meta-rayban.onrender.com/?desktop=1
 3. Откройте `App connections` → `Web apps`.
 4. Нажмите `Add a web app`.
 5. Укажите название `Sky Hop`.
-6. Вставьте HTTPS-адрес Render с версией текущей сборки, например `https://sky-hop-meta-rayban.onrender.com/?release=boot3`. Параметр версии заставит очки один раз запросить свежий `index.html`, даже если старая версия осталась в кэше.
+6. Вставьте HTTPS-адрес Render с версией текущей сборки, например `https://sky-hop-meta-rayban.onrender.com/?release=modifier5`. Параметр версии заставит очки один раз запросить свежий `index.html`, даже если старая версия осталась в кэше.
 7. Подтвердите добавление.
 
 ## Как выпускать обновления
